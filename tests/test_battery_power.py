@@ -31,9 +31,9 @@ class TestBatteryPowerDescription:
         desc = next(s for s in PECRON_SENSORS if s.key == "battery_pack")
         assert desc.struct_product == ("host_packet_current", "host_packet_voltage")
 
-    def test_negate_value_is_true(self):
+    def test_negate_value_is_false(self):
         desc = next(s for s in PECRON_SENSORS if s.key == "battery_pack")
-        assert desc.negate_value is True
+        assert desc.negate_value is False
 
     def test_unit_is_watt(self):
         from homeassistant.const import UnitOfPower
@@ -52,17 +52,17 @@ class TestBatteryPowerDescription:
 
 class TestBatteryPowerNativeValue:
     def test_charging_returns_positive(self):
-        # Device reports negative current when charging; negate_value=True flips it
+        # Device reports positive current when charging
         sensor = make_sensor("battery_pack", {
-            "host_packet_current": "-0.32",
+            "host_packet_current": "0.82",
             "host_packet_voltage": "53.4",
         })
-        assert sensor.native_value == pytest.approx(0.32 * 53.4, abs=0.1)
+        assert sensor.native_value == pytest.approx(0.82 * 53.4, abs=0.1)
         assert sensor.native_value > 0
 
     def test_discharging_returns_negative(self):
         sensor = make_sensor("battery_pack", {
-            "host_packet_current": "5.0",
+            "host_packet_current": "-5.0",
             "host_packet_voltage": "52.0",
         })
         assert sensor.native_value == pytest.approx(-260.0, abs=0.1)
@@ -108,7 +108,7 @@ class TestBatteryPowerNativeValue:
 
     def test_result_is_rounded_to_one_decimal(self):
         sensor = make_sensor("battery_pack", {
-            "host_packet_current": "-1.123456789",
+            "host_packet_current": "1.123456789",
             "host_packet_voltage": "53.123456789",
         })
         result = sensor.native_value
@@ -117,14 +117,15 @@ class TestBatteryPowerNativeValue:
 
     def test_live_data_example(self):
         # Values observed from live F3000LFP at 93% battery, charging from solar
+        # Device reports positive current when charging (+0.82A observed with remain_charging_time=154)
         sensor = make_sensor("battery_pack", {
-            "host_packet_current": "-0.319999992847443",
+            "host_packet_current": "0.819999992847443",
             "host_packet_voltage": "53.4029998779297",
         })
         result = sensor.native_value
         assert result is not None
         assert result > 0   # Should be positive (charging)
-        assert result == pytest.approx(0.32 * 53.4, abs=1.0)
+        assert result == pytest.approx(0.82 * 53.4, abs=1.0)
 
 
 class TestTslFiltering:

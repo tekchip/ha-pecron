@@ -101,7 +101,7 @@ PECRON_SENSORS = [
         key="battery_pack",
         struct_product=("host_packet_current", "host_packet_voltage"),
         tsl_code="host_packet_data_jdb",
-        negate_value=True,  # Device reports negative current when charging; negate for positive=charging
+        negate_value=False,  # Device reports positive current when charging; no negation needed
         name="Battery Power",
         icon="mdi:battery-heart",
         device_class=SensorDeviceClass.POWER,
