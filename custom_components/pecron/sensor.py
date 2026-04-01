@@ -37,6 +37,8 @@ class PecronSensorDescription(SensorEntityDescription):
 
     always_create: bool = False  # Bypass TSL filtering
     smart_availability: bool = False  # Use smart logic for availability
+    struct_key: str | None = None  # Field name within a STRUCT dict property
+    tsl_code: str | None = None  # TSL property code override for availability check
 
     def __post_init__(self) -> None:
         """Post init."""
@@ -92,7 +94,71 @@ PECRON_SENSORS = [
         always_create=True,
         smart_availability=True,
     ),
+    PecronSensorDescription(
+        key="ac_input",
+        struct_key="ac_power",
+        tsl_code="ac_data_input_hm",
+        name="AC Input Power",
+        icon="mdi:transmission-tower",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    PecronSensorDescription(
+        key="dc_input",
+        struct_key="dc_input_power",
+        tsl_code="dc_data_input_hm",
+        name="Solar Input Power",
+        icon="mdi:solar-power",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
 ]
+
+
+def create_sensors_for_device_helper(
+    coordinator: DataUpdateCoordinator,
+    device_key: str,
+    device: Any,
+    tsl: list | None,
+) -> list:
+    """Create all sensor entities for a device."""
+    sensors = []
+
+    if tsl:
+        tsl_property_codes = {prop.code for prop in tsl}
+        _LOGGER.debug(
+            "Filtering sensors for %s based on TSL with %d properties",
+            device.device_name,
+            len(tsl_property_codes),
+        )
+
+        for sensor_desc in PECRON_SENSORS:
+            if (
+                sensor_desc.always_create
+                or sensor_desc.key in tsl_property_codes
+                or f"{sensor_desc.key}_hm" in tsl_property_codes
+                or (sensor_desc.tsl_code and sensor_desc.tsl_code in tsl_property_codes)
+            ):
+                sensors.append(
+                    PecronSensor(coordinator, device_key, device, sensor_desc)
+                )
+            else:
+                _LOGGER.debug(
+                    "Skipping sensor '%s' for %s - not in TSL",
+                    sensor_desc.key,
+                    device.device_name,
+                )
+    else:
+        _LOGGER.debug(
+            "TSL not available for %s - creating all sensors",
+            device.device_name,
+        )
+        for sensor_desc in PECRON_SENSORS:
+            sensors.append(PecronSensor(coordinator, device_key, device, sensor_desc))
+
+    return sensors
 
 
 async def async_setup_entry(
@@ -103,68 +169,17 @@ async def async_setup_entry(
     """Set up sensors for Pecron."""
     coordinator: DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    # Track which devices we've created entities for
     known_device_keys: set[str] = set()
 
-    def create_sensors_for_device(device_key: str, device_data: dict) -> list:
-        """Create all sensor entities for a device."""
-        sensors = []
-        tsl = device_data.get("tsl")
-
-        # If TSL is available, filter sensors based on supported properties
-        if tsl:
-            tsl_property_codes = {prop.code for prop in tsl}
-            _LOGGER.debug(
-                "Filtering sensors for %s based on TSL with %d properties",
-                device_data["device"].device_name,
-                len(tsl_property_codes),
-            )
-
-            for sensor_desc in PECRON_SENSORS:
-                # Always create sensors marked with always_create flag
-                # Otherwise check both property name and _hm variant (API maps xxx_hm -> xxx)
-                if (sensor_desc.always_create or
-                    sensor_desc.key in tsl_property_codes or
-                    f"{sensor_desc.key}_hm" in tsl_property_codes):
-                    sensors.append(
-                        PecronSensor(
-                            coordinator,
-                            device_key,
-                            device_data["device"],
-                            sensor_desc,
-                        )
-                    )
-                else:
-                    _LOGGER.debug(
-                        "Skipping sensor '%s' for %s - not in TSL (checked '%s' and '%s_hm')",
-                        sensor_desc.key,
-                        device_data["device"].device_name,
-                        sensor_desc.key,
-                        sensor_desc.key,
-                    )
-        else:
-            # Fallback: create all sensors if TSL is not available
-            _LOGGER.debug(
-                "TSL not available for %s - creating all sensors",
-                device_data["device"].device_name,
-            )
-            for sensor_desc in PECRON_SENSORS:
-                sensors.append(
-                    PecronSensor(
-                        coordinator,
-                        device_key,
-                        device_data["device"],
-                        sensor_desc,
-                    )
-                )
-
-        return sensors
-
-    # Create initial sensors
     sensors = []
     if coordinator.data is not None:
         for device_key, device_data in coordinator.data.items():
-            sensors.extend(create_sensors_for_device(device_key, device_data))
+            tsl = device_data.get("tsl")
+            sensors.extend(
+                create_sensors_for_device_helper(
+                    coordinator, device_key, device_data["device"], tsl
+                )
+            )
             known_device_keys.add(device_key)
 
         if not sensors:
@@ -174,7 +189,6 @@ async def async_setup_entry(
 
     async_add_entities(sensors)
 
-    # Add listener for new devices
     def check_for_new_devices() -> None:
         """Check for new devices and add entities for them."""
         if not coordinator.data:
@@ -186,13 +200,17 @@ async def async_setup_entry(
             new_sensors = []
             for device_key in new_device_keys:
                 device_data = coordinator.data[device_key]
-                new_sensors.extend(create_sensors_for_device(device_key, device_data))
+                tsl = device_data.get("tsl")
+                new_sensors.extend(
+                    create_sensors_for_device_helper(
+                        coordinator, device_key, device_data["device"], tsl
+                    )
+                )
                 known_device_keys.add(device_key)
 
             if new_sensors:
                 async_add_entities(new_sensors)
 
-    # Register the listener
     entry.async_on_unload(coordinator.async_add_listener(check_for_new_devices))
 
 
@@ -236,6 +254,22 @@ class PecronSensor(CoordinatorEntity, SensorEntity):
 
         props = self.coordinator.data[self._device_key]["properties"]
         value = getattr(props, self.entity_description.key, None)
+
+        # Struct property: extract specific field from the dict
+        if self.entity_description.struct_key:
+            if isinstance(value, dict):
+                raw = value.get(self.entity_description.struct_key)
+                try:
+                    return int(float(raw)) if raw is not None else None
+                except (ValueError, TypeError):
+                    _LOGGER.debug(
+                        "Could not parse struct field '%s' for sensor '%s': %r",
+                        self.entity_description.struct_key,
+                        self.entity_description.key,
+                        raw,
+                    )
+                    return None
+            return None
 
         if value is None and not hasattr(props, self.entity_description.key):
             _LOGGER.debug(
