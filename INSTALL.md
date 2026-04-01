@@ -10,15 +10,27 @@
 
 ### Method 1: HACS (Recommended)
 
-1. Open Home Assistant
-2. Go to **Settings** → **Devices & Services**
-3. Click **+ CREATE INTEGRATION**
-4. Search for "Pecron"
-5. Click **Install**
-6. Restart Home Assistant
-7. Go to **Settings** → **Devices & Services** → **+ CREATE INTEGRATION**
-8. Search for "Pecron" again and select it
-9. Enter your Pecron credentials and region
+#### Add this fork as a custom repository
+
+This fork is not in the default HACS catalog, so you need to add it as a custom repository first:
+
+1. Open Home Assistant and go to **HACS** → **Integrations**
+2. Click the **⋮** menu in the top right corner
+3. Select **Custom repositories**
+4. In the **Repository** field enter: `https://code.brockh.at/Tekchip/ha-pecron`
+5. Set **Category** to **Integration**
+6. Click **Add**
+
+#### Install the integration
+
+7. Search for **Pecron** in HACS Integrations
+8. Click **Download** and confirm
+9. Restart Home Assistant
+10. Go to **Settings** → **Devices & Services** → **+ CREATE INTEGRATION**
+11. Search for "Pecron" and select it
+12. Enter your Pecron credentials and region
+
+> **Upstream version:** To install the original upstream version, use `https://github.com/jsight/ha-pecron` as the repository URL in step 4 instead.
 
 ### Method 2: Manual Installation
 
@@ -28,7 +40,7 @@ Clone the repository to a temporary location:
 
 ```bash
 cd /tmp
-git clone https://github.com/jsight/ha-pecron.git
+git clone https://code.brockh.at/Tekchip/ha-pecron.git
 ```
 
 #### Step 2: Locate Your Home Assistant Configuration
@@ -53,6 +65,8 @@ Replace `~/.homeassistant` with your Home Assistant config path.
 ```bash
 cp -r /tmp/ha-pecron/custom_components/pecron ~/.homeassistant/custom_components/
 ```
+
+> **Note:** For the original upstream version, replace the clone URL with `https://github.com/jsight/ha-pecron.git`.
 
 Verify the files are in place:
 
@@ -188,13 +202,17 @@ Replace `~/.homeassistant` with your actual Home Assistant config path.
 
 ## Support
 
-For issues, bugs, or feature requests:
+For issues, bugs, or feature requests related to this fork:
+- Check the [Forgejo Issues](https://code.brockh.at/Tekchip/ha-pecron/issues)
+
+For issues with the upstream integration:
 - Check the [GitHub Issues](https://github.com/jsight/ha-pecron/issues)
-- Open a new issue with:
-  - Home Assistant version
-  - Integration version
-  - Relevant logs (Settings → System → Logs)
-  - Steps to reproduce
+
+When reporting, please include:
+- Home Assistant version
+- Integration version
+- Relevant logs (Settings → System → Logs)
+- Steps to reproduce
 
 ## Disclaimer
 

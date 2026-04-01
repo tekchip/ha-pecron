@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-03-31
+
+### Added
+- **AC Input Power sensor**: Separate sensor for AC/shore power input (W), reads from `ac_data_input_hm` STRUCT property
+- **Solar Input Power sensor**: Separate sensor for solar/PV input (W), reads from `dc_data_input_hm` STRUCT property
+- **Energy Dashboard sensors** (8 new kWh sensors, `TOTAL_INCREASING`):
+  - PV Generation (Session / Total)
+  - AC Charge (Session / Total)
+  - DC Output (Session / Total)
+  - AC Output (Session / Total)
+- HACS custom repository support via Forgejo at `https://code.brockh.at/Tekchip/ha-pecron`
+
+### Changed
+- Updated documentation and issue tracker links to Forgejo fork
+
+> This release is a fork maintained by [@Tekchip](https://code.brockh.at/Tekchip). PRs for the individual features have been submitted upstream to [jsight/ha-pecron](https://github.com/jsight/ha-pecron).
+
 ## [0.4.0] - 2026-03-28
 
 ### Added

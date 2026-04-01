@@ -31,19 +31,21 @@ This integration communicates with your Pecron device through **Pecron's cloud A
 
 ## Installation
 
-### Via HACS
+### Via HACS (this fork)
 
-1. Go to **HACS** → **Integrations** → **Custom repositories**
-2. Add this repository: `https://github.com/jsight/ha-pecron`
-3. Select **Pecron** and click **Install**
+1. Go to **HACS** → **Integrations** → click the **⋮** menu (top right) → **Custom repositories**
+2. Add `https://code.brockh.at/Tekchip/ha-pecron` as category **Integration**
+3. Search for **Pecron** in HACS and click **Download**
 4. Restart Home Assistant
 5. Go to **Settings** → **Devices & Services** → **Create Integration**
 6. Search for **Pecron**
 
+> **Note:** To install the original upstream version instead, add `https://github.com/jsight/ha-pecron` as the custom repository URL.
+
 ### Manual
 
 ```bash
-git clone https://github.com/jsight/ha-pecron.git
+git clone https://code.brockh.at/Tekchip/ha-pecron.git
 cp -r ha-pecron/custom_components/pecron ~/.homeassistant/custom_components/
 # Restart Home Assistant
 ```
@@ -72,10 +74,16 @@ The integration creates the following entities for each device:
 
 ### Sensors
 - **Battery Percentage** - Current battery level (%)
-- **Input Power** - Power being drawn from input sources (W)
+- **Input Power** - Total power being drawn from input sources (W)
+- **AC Input Power** - Power from AC/shore power input (W)
+- **Solar Input Power** - Power from solar/PV input (W)
 - **Output Power** - Total power being output (W)
 - **Time to Full** - Estimated time until battery is fully charged (minutes)
 - **Time to Empty** - Estimated time until battery is depleted (minutes)
+- **PV Generation (Session / Total)** - Solar energy generated this session and all-time (kWh)
+- **AC Charge (Session / Total)** - Energy charged from AC/shore power (kWh)
+- **DC Output (Session / Total)** - Energy discharged via DC output (kWh)
+- **AC Output (Session / Total)** - Energy discharged via AC output (kWh)
 
 ### Binary Sensors
 - **UPS Mode** - Whether UPS mode is active

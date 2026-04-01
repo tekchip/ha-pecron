@@ -3,15 +3,16 @@
   "domain": "pecron",
   "name": "Pecron",
   "codeowners": [
-    "@jsight"
+    "@jsight",
+    "@Tekchip"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/jsight/ha-pecron",
-  "issue_tracker": "https://github.com/jsight/ha-pecron/issues",
+  "documentation": "https://code.brockh.at/Tekchip/ha-pecron",
+  "issue_tracker": "https://code.brockh.at/Tekchip/ha-pecron/issues",
   "requirements": [
     "unofficial-pecron-api==0.3.0"
   ],
-  "version": "0.4.0",
+  "version": "0.4.1",
   "iot_class": "cloud_polling",
   "homeassistant": {
     "minimum_version": "2024.1.0"

@@ -38,7 +38,8 @@ class PecronSensorDescription(SensorEntityDescription):
     always_create: bool = False  # Bypass TSL filtering
     smart_availability: bool = False  # Use smart logic for availability
     struct_key: str | None = None  # Field name within a STRUCT dict property
-    tsl_code: str | None = None  # TSL property code override for availability check
+    tsl_code: str | None = None    # TSL property code override for availability check
+    raw_code: str | None = None    # Read from props.get_by_code() for untyped properties
 
     def __post_init__(self) -> None:
         """Post init."""
@@ -114,6 +115,78 @@ PECRON_SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
     ),
+    PecronSensorDescription(
+        key="pv_generation_session",
+        raw_code="solar_panel_power_generation",
+        name="PV Generation (Session)",
+        icon="mdi:solar-power",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    ),
+    PecronSensorDescription(
+        key="pv_generation_total",
+        raw_code="total_energy",
+        name="PV Generation (Total)",
+        icon="mdi:solar-power",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    ),
+    PecronSensorDescription(
+        key="ac_charge_session",
+        raw_code="ac_charge_energy",
+        name="AC Charge (Session)",
+        icon="mdi:transmission-tower",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    ),
+    PecronSensorDescription(
+        key="ac_charge_total",
+        raw_code="total_ac_charge_energy",
+        name="AC Charge (Total)",
+        icon="mdi:transmission-tower",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    ),
+    PecronSensorDescription(
+        key="dc_output_session",
+        raw_code="dc_output_energy",
+        name="DC Output (Session)",
+        icon="mdi:battery-arrow-down",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    ),
+    PecronSensorDescription(
+        key="dc_output_total",
+        raw_code="total_dc_output_energy",
+        name="DC Output (Total)",
+        icon="mdi:battery-arrow-down",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    ),
+    PecronSensorDescription(
+        key="ac_output_session",
+        raw_code="ac_output_energy",
+        name="AC Output (Session)",
+        icon="mdi:power-socket",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    ),
+    PecronSensorDescription(
+        key="ac_output_total",
+        raw_code="total_ac_output_energy",
+        name="AC Output (Total)",
+        icon="mdi:power-socket",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    ),
 ]
 
 
@@ -133,17 +206,15 @@ def create_sensors_for_device_helper(
             device.device_name,
             len(tsl_property_codes),
         )
-
         for sensor_desc in PECRON_SENSORS:
             if (
                 sensor_desc.always_create
                 or sensor_desc.key in tsl_property_codes
                 or f"{sensor_desc.key}_hm" in tsl_property_codes
                 or (sensor_desc.tsl_code and sensor_desc.tsl_code in tsl_property_codes)
+                or (sensor_desc.raw_code and sensor_desc.raw_code in tsl_property_codes)
             ):
-                sensors.append(
-                    PecronSensor(coordinator, device_key, device, sensor_desc)
-                )
+                sensors.append(PecronSensor(coordinator, device_key, device, sensor_desc))
             else:
                 _LOGGER.debug(
                     "Skipping sensor '%s' for %s - not in TSL",
@@ -168,7 +239,6 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensors for Pecron."""
     coordinator: DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-
     known_device_keys: set[str] = set()
 
     sensors = []
@@ -190,10 +260,8 @@ async def async_setup_entry(
     async_add_entities(sensors)
 
     def check_for_new_devices() -> None:
-        """Check for new devices and add entities for them."""
         if not coordinator.data:
             return
-
         new_device_keys = set(coordinator.data.keys()) - known_device_keys
         if new_device_keys:
             _LOGGER.info("Adding sensors for %d new device(s)", len(new_device_keys))
@@ -207,7 +275,6 @@ async def async_setup_entry(
                     )
                 )
                 known_device_keys.add(device_key)
-
             if new_sensors:
                 async_add_entities(new_sensors)
 
@@ -253,6 +320,20 @@ class PecronSensor(CoordinatorEntity, SensorEntity):
             return None
 
         props = self.coordinator.data[self._device_key]["properties"]
+
+        # Raw-code sensor: read float value directly from props.raw payload
+        if self.entity_description.raw_code:
+            raw = props.get_by_code(self.entity_description.raw_code)
+            try:
+                return float(raw) if raw is not None else None
+            except (ValueError, TypeError):
+                _LOGGER.debug(
+                    "Could not parse raw_code value for sensor '%s': %r",
+                    self.entity_description.key,
+                    raw,
+                )
+                return None
+
         value = getattr(props, self.entity_description.key, None)
 
         # Struct property: extract specific field from the dict
