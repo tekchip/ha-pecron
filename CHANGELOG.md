@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-04-01
+
+### Changed
+- Renamed "Solar Input Power" sensor to "PV DC Input" for consistency with AC Input Power and PV Generation naming
+
 ## [0.4.1] - 2026-03-31
 
 ### Added
