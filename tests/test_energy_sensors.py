@@ -38,16 +38,17 @@ def make_props_with_raw(raw_values: dict):
 
 def make_sensor(key, props):
     desc = next(s for s in PECRON_SENSORS if s.key == key)
-    coordinator = MagicMock()
-    coordinator.data = {
-        "test_key": {
-            "device": MagicMock(device_name="Test Device", product_name="F3000LFP"),
-            "properties": props,
-        }
-    }
     device = MagicMock()
     device.device_key = "test_key"
     device.device_name = "Test Device"
+    device.product_name = "F3000LFP"
+    coordinator = MagicMock()
+    coordinator.data = {
+        "test_key": {
+            "device": device,
+            "properties": props,
+        }
+    }
     return PecronSensor(coordinator, "test_key", device, desc)
 
 
