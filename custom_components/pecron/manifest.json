@@ -7,8 +7,8 @@
     "@Tekchip"
   ],
   "config_flow": true,
-  "documentation": "https://code.brockh.at/Tekchip/ha-pecron",
-  "issue_tracker": "https://code.brockh.at/Tekchip/ha-pecron/issues",
+  "documentation": "https://github.com/tekchip/ha-pecron",
+  "issue_tracker": "https://github.com/tekchip/ha-pecron/issues",
   "requirements": [
     "unofficial-pecron-api==0.3.0"
   ],

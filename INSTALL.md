@@ -17,7 +17,7 @@ This fork is not in the default HACS catalog, so you need to add it as a custom 
 1. Open Home Assistant and go to **HACS** → **Integrations**
 2. Click the **⋮** menu in the top right corner
 3. Select **Custom repositories**
-4. In the **Repository** field enter: `https://code.brockh.at/Tekchip/ha-pecron`
+4. In the **Repository** field enter: `https://github.com/tekchip/ha-pecron`
 5. Set **Category** to **Integration**
 6. Click **Add**
 
@@ -40,7 +40,7 @@ Clone the repository to a temporary location:
 
 ```bash
 cd /tmp
-git clone https://code.brockh.at/Tekchip/ha-pecron.git
+git clone https://github.com/tekchip/ha-pecron.git
 ```
 
 #### Step 2: Locate Your Home Assistant Configuration
@@ -203,7 +203,7 @@ Replace `~/.homeassistant` with your actual Home Assistant config path.
 ## Support
 
 For issues, bugs, or feature requests related to this fork:
-- Check the [Forgejo Issues](https://code.brockh.at/Tekchip/ha-pecron/issues)
+- Check the [GitHub Issues](https://github.com/tekchip/ha-pecron/issues)
 
 For issues with the upstream integration:
 - Check the [GitHub Issues](https://github.com/jsight/ha-pecron/issues)

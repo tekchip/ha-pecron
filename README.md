@@ -34,7 +34,7 @@ This integration communicates with your Pecron device through **Pecron's cloud A
 ### Via HACS (this fork)
 
 1. Go to **HACS** → **Integrations** → click the **⋮** menu (top right) → **Custom repositories**
-2. Add `https://code.brockh.at/Tekchip/ha-pecron` as category **Integration**
+2. Add `https://github.com/tekchip/ha-pecron` as category **Integration**
 3. Search for **Pecron** in HACS and click **Download**
 4. Restart Home Assistant
 5. Go to **Settings** → **Devices & Services** → **Create Integration**
