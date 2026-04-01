@@ -37,7 +37,9 @@ class PecronSensorDescription(SensorEntityDescription):
 
     always_create: bool = False  # Bypass TSL filtering
     smart_availability: bool = False  # Use smart logic for availability
-    struct_key: str | None = None  # Field name within a STRUCT dict property
+    struct_key: str | None = None              # Single field from a STRUCT dict property
+    struct_product: tuple[str, str] | None = None  # Multiply two STRUCT fields
+    negate_value: bool = False                 # Negate result (sign correction)
     tsl_code: str | None = None    # TSL property code override for availability check
     raw_code: str | None = None    # Read from props.get_by_code() for untyped properties
 
@@ -94,6 +96,17 @@ PECRON_SENSORS = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         always_create=True,
         smart_availability=True,
+    ),
+    PecronSensorDescription(
+        key="battery_pack",
+        struct_product=("host_packet_current", "host_packet_voltage"),
+        tsl_code="host_packet_data_jdb",
+        negate_value=True,  # Device reports negative current when charging; negate for positive=charging
+        name="Battery Power",
+        icon="mdi:battery-heart",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
     ),
     PecronSensorDescription(
         key="ac_input",
@@ -348,6 +361,26 @@ class PecronSensor(CoordinatorEntity, SensorEntity):
                         self.entity_description.struct_key,
                         self.entity_description.key,
                         raw,
+                    )
+                    return None
+            return None
+
+        # Struct product: multiply two fields from a STRUCT dict (e.g. current × voltage)
+        if self.entity_description.struct_product:
+            if isinstance(value, dict):
+                k1, k2 = self.entity_description.struct_product
+                r1, r2 = value.get(k1), value.get(k2)
+                try:
+                    if r1 is None or r2 is None:
+                        return None
+                    result = float(r1) * float(r2)
+                    if self.entity_description.negate_value:
+                        result = -result
+                    return round(result, 1)
+                except (ValueError, TypeError):
+                    _LOGGER.debug(
+                        "Could not compute product of '%s'×'%s' for sensor '%s': %r, %r",
+                        k1, k2, self.entity_description.key, r1, r2,
                     )
                     return None
             return None
