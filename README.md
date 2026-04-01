@@ -76,7 +76,7 @@ The integration creates the following entities for each device:
 - **Battery Percentage** - Current battery level (%)
 - **Input Power** - Total power being drawn from input sources (W)
 - **AC Input Power** - Power from AC/shore power input (W)
-- **Solar Input Power** - Power from solar/PV input (W)
+- **PV DC Input** - Power from solar/PV input (W)
 - **Output Power** - Total power being output (W)
 - **Time to Full** - Estimated time until battery is fully charged (minutes)
 - **Time to Empty** - Estimated time until battery is depleted (minutes)
