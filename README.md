@@ -45,7 +45,7 @@ This integration communicates with your Pecron device through **Pecron's cloud A
 ### Manual
 
 ```bash
-git clone https://code.brockh.at/Tekchip/ha-pecron.git
+git clone https://github.com/tekchip/ha-pecron.git
 cp -r ha-pecron/custom_components/pecron ~/.homeassistant/custom_components/
 # Restart Home Assistant
 ```

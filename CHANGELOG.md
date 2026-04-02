@@ -30,12 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - AC Charge (Session / Total)
   - DC Output (Session / Total)
   - AC Output (Session / Total)
-- HACS custom repository support via Forgejo at `https://code.brockh.at/Tekchip/ha-pecron`
+- HACS custom repository support via GitHub at `https://github.com/tekchip/ha-pecron`
 
 ### Changed
-- Updated documentation and issue tracker links to Forgejo fork
+- Updated documentation and issue tracker links to GitHub fork
 
-> This release is a fork maintained by [@Tekchip](https://code.brockh.at/Tekchip). PRs for the individual features have been submitted upstream to [jsight/ha-pecron](https://github.com/jsight/ha-pecron).
+> This release is a fork maintained by [@Tekchip](https://github.com/tekchip). PRs for the individual features have been submitted upstream to [jsight/ha-pecron](https://github.com/jsight/ha-pecron).
 
 ## [0.4.0] - 2026-03-28
 
