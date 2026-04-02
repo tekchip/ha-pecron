@@ -2,6 +2,8 @@
 
 A Home Assistant community integration for Pecron portable power stations. Monitor and control your devices with real-time data and automation capabilities.
 
+> **Tested hardware:** This fork has been developed and tested exclusively on a **Pecron F3000LFP**. Other Pecron models may work but have not been verified.
+
 ## Features
 
 - **Device Control** - Turn AC and DC outputs on/off directly from Home Assistant
@@ -136,7 +138,7 @@ For bugs, feature requests, or questions, please open an issue on GitHub.
 
 ## Disclaimer
 
-This integration is not affiliated with or endorsed by Pecron. It uses the unofficial API which was reverse-engineered from the Pecron Android app. Use at your own risk.
+This integration is not affiliated with or endorsed by Pecron. It uses the unofficial API which was reverse-engineered from the Pecron Android app. Use at your own risk. This fork has only been tested on a Pecron F3000LFP — compatibility with other models is not guaranteed.
 
 ## Development
 
