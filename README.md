@@ -138,6 +138,10 @@ For bugs, feature requests, or questions, please open an issue on GitHub.
 
 This integration is not affiliated with or endorsed by Pecron. It uses the unofficial API which was reverse-engineered from the Pecron Android app. Use at your own risk.
 
+## Development
+
+The features added in this fork (energy dashboard sensors, battery power monitoring, and related improvements) were developed with [Claude Code](https://claude.ai/code) by Anthropic. All commits reflect this via `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>` in the commit history.
+
 ## License
 
 MIT
