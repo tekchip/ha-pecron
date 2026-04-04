@@ -35,13 +35,15 @@ PECRON_SELECTS = [
         name="AC Charge Speed",
         api_method="set_ac_charge_speed",
         icon="mdi:battery-charging",
-        # TSL code is ac_charging_power_ios; mapped to ac_charge_speed on DeviceProperties
-        options=["0%", "25%", "50%", "75%", "100%"],
+        # TSL code is ac_charging_power_ios
+        # Enum values confirmed from F3000LFP TSL (tslVersion 1.2.0, 2025-11-20):
+        #   "0" = 20%, "1" = 40%, "2" = 60%, "3" = 80%, "4" = 100%
+        options=["20%", "40%", "60%", "80%", "100%"],
         option_map={
-            "0%": "0",
-            "25%": "1",
-            "50%": "2",
-            "75%": "3",
+            "20%": "0",
+            "40%": "1",
+            "60%": "2",
+            "80%": "3",
             "100%": "4",
         },
     ),
@@ -49,10 +51,10 @@ PECRON_SELECTS = [
 
 # Reverse map: API value -> display label
 _VALUE_TO_LABEL = {
-    "0": "0%",
-    "1": "25%",
-    "2": "50%",
-    "3": "75%",
+    "0": "20%",
+    "1": "40%",
+    "2": "60%",
+    "3": "80%",
     "4": "100%",
 }
 
