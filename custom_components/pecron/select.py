@@ -35,9 +35,10 @@ PECRON_SELECTS = [
         name="AC Charge Speed",
         api_method="set_ac_charge_speed",
         icon="mdi:battery-charging",
-        # TSL code is ac_charging_power_ios
-        # Enum values confirmed from F3000LFP TSL (tslVersion 1.2.0, 2025-11-20):
-        #   "0" = 20%, "1" = 40%, "2" = 60%, "3" = 80%, "4" = 100%
+        # TSL code is ac_charging_power_ios.
+        # Options and option_map are populated dynamically from TSL enum specs at
+        # entity creation time so they match the actual device model. The values
+        # below are a fallback used only when TSL is unavailable.
         options=["20%", "40%", "60%", "80%", "100%"],
         option_map={
             "20%": "0",
@@ -49,14 +50,30 @@ PECRON_SELECTS = [
     ),
 ]
 
-# Reverse map: API value -> display label
-_VALUE_TO_LABEL = {
+# Fallback reverse map used when TSL enum specs are unavailable
+_FALLBACK_VALUE_TO_LABEL = {
     "0": "20%",
     "1": "40%",
     "2": "60%",
     "3": "80%",
     "4": "100%",
 }
+
+TSL_CODE_FOR_SELECT = "ac_charging_power_ios"
+
+
+def _build_select_from_tsl_specs(
+    base_desc: PecronSelectDescription,
+    tsl_enum_specs: dict,
+) -> PecronSelectDescription:
+    """Return a copy of base_desc with options/option_map from TSL if available."""
+    from dataclasses import replace
+    specs = tsl_enum_specs.get(TSL_CODE_FOR_SELECT)
+    if not specs:
+        return base_desc
+    options = [s["name"] for s in specs]
+    option_map = {s["name"]: s["value"] for s in specs}
+    return replace(base_desc, options=options, option_map=option_map)
 
 
 async def async_setup_entry(
@@ -74,6 +91,7 @@ async def async_setup_entry(
         """Create all select entities for a device."""
         selects = []
         tsl = device_data.get("tsl")
+        tsl_enum_specs = device_data.get("tsl_enum_specs", {})
 
         if tsl:
             tsl_property_codes = {prop.code for prop in tsl}
@@ -84,19 +102,20 @@ async def async_setup_entry(
             )
 
             for select_desc in PECRON_SELECTS:
-                # ac_charge_speed maps to ac_charging_power_ios in the TSL
-                tsl_code = "ac_charging_power_ios" if select_desc.key == "ac_charge_speed" else select_desc.key
+                tsl_code = TSL_CODE_FOR_SELECT if select_desc.key == "ac_charge_speed" else select_desc.key
                 if (tsl_code in tsl_property_codes or
                         f"{tsl_code}_hm" in tsl_property_codes or
                         select_desc.key in tsl_property_codes or
                         f"{select_desc.key}_hm" in tsl_property_codes):
-                    selects.append(
-                        PecronSelect(
-                            coordinator,
-                            device_key,
-                            device_data["device"],
-                            select_desc,
+                    desc = _build_select_from_tsl_specs(select_desc, tsl_enum_specs)
+                    if desc is not select_desc:
+                        _LOGGER.debug(
+                            "Built AC Charge Speed options from TSL for %s: %s",
+                            device_data["device"].device_name,
+                            desc.options,
                         )
+                    selects.append(
+                        PecronSelect(coordinator, device_key, device_data["device"], desc)
                     )
                 else:
                     _LOGGER.debug(
@@ -112,12 +131,7 @@ async def async_setup_entry(
             )
             for select_desc in PECRON_SELECTS:
                 selects.append(
-                    PecronSelect(
-                        coordinator,
-                        device_key,
-                        device_data["device"],
-                        select_desc,
-                    )
+                    PecronSelect(coordinator, device_key, device_data["device"], select_desc)
                 )
 
         return selects
@@ -203,7 +217,11 @@ class PecronSelect(CoordinatorEntity, SelectEntity):
         if value is None:
             return None
 
-        return _VALUE_TO_LABEL.get(str(value), str(value))
+        # Use the entity's own option_map (built from TSL) as the reverse lookup
+        value_to_label = {v: k for k, v in self.entity_description.option_map.items()}
+        if not value_to_label:
+            value_to_label = _FALLBACK_VALUE_TO_LABEL
+        return value_to_label.get(str(value), str(value))
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""

@@ -1,6 +1,7 @@
 """Pecron Home Assistant integration."""
 
 import asyncio
+import json
 import logging
 from datetime import timedelta
 from typing import Final
@@ -280,6 +281,8 @@ class PecronDataUpdateCoordinator(DataUpdateCoordinator):
         self.api: PecronAPI | None = None
         self.devices = []
         self.known_device_keys: set[str] = set()  # Track devices we've seen
+        # TSL is static metadata — cache it per product_key so it is only fetched once
+        self._tsl_cache: dict[str, dict] = {}  # product_key -> {tsl, tsl_enum_specs}
 
         super().__init__(
             hass,
@@ -373,18 +376,55 @@ class PecronDataUpdateCoordinator(DataUpdateCoordinator):
             try:
                 props = self.api.get_device_properties(device)
 
-                # Fetch TSL (Thing Specification Language) for capability discovery
+                # Fetch TSL (Thing Specification Language) for capability discovery.
+                # TSL is static metadata — cache it per product_key to avoid re-fetching
+                # on every poll.
                 tsl = None
+                tsl_enum_specs: dict = {}
                 try:
-                    tsl = self.api.get_product_tsl(device)
-                    _LOGGER.debug(
-                        "TSL for %s (%s): %d properties",
-                        device.device_name,
-                        device.product_name,
-                        len(tsl) if tsl else 0,
-                    )
+                    pk = device.product_key
+                    if pk not in self._tsl_cache:
+                        raw = self.api._request(
+                            "GET",
+                            "/v2/binding/enduserapi/productTSL",
+                            params={"pk": pk},
+                        )
+                        tsl_json = raw.get("tslJson") if isinstance(raw, dict) else None
+                        if isinstance(tsl_json, str):
+                            tsl_json = json.loads(tsl_json)
+                        raw_props = (
+                            tsl_json.get("properties", [])
+                            if isinstance(tsl_json, dict)
+                            else (raw.get("properties", []) if isinstance(raw, dict) else [])
+                        )
+
+                        from unofficial_pecron_api.models import TslProperty
+                        parsed_tsl = [TslProperty.from_api(p) for p in raw_props]
+
+                        specs: dict = {}
+                        for prop in raw_props:
+                            code = prop.get("code") or prop.get("resourceCode", "")
+                            if prop.get("dataType") == "ENUM" and prop.get("specs"):
+                                specs[code] = [
+                                    {"value": s["value"], "name": s["name"]}
+                                    for s in prop["specs"]
+                                ]
+
+                        self._tsl_cache[pk] = {"tsl": parsed_tsl, "tsl_enum_specs": specs}
+                        _LOGGER.debug(
+                            "TSL for %s (%s): %d properties, %d enum specs (cached)",
+                            device.device_name,
+                            device.product_name,
+                            len(parsed_tsl),
+                            len(specs),
+                        )
+                    else:
+                        _LOGGER.debug("Using cached TSL for %s", device.product_name)
+
+                    tsl = self._tsl_cache[pk]["tsl"]
+                    tsl_enum_specs = self._tsl_cache[pk]["tsl_enum_specs"]
+
                     if tsl:
-                        # Log discovered capabilities
                         readable_props = [p.code for p in tsl if not p.writable]
                         writable_props = [p.code for p in tsl if p.writable]
                         _LOGGER.info(
@@ -393,14 +433,8 @@ class PecronDataUpdateCoordinator(DataUpdateCoordinator):
                             len(readable_props),
                             len(writable_props),
                         )
-                        _LOGGER.debug(
-                            "Readable properties: %s",
-                            readable_props,
-                        )
-                        _LOGGER.debug(
-                            "Writable properties: %s",
-                            writable_props,
-                        )
+                        _LOGGER.debug("Readable properties: %s", readable_props)
+                        _LOGGER.debug("Writable properties: %s", writable_props)
                 except Exception as tsl_err:
                     _LOGGER.warning(
                         "Could not fetch TSL for %s: %s. Will use all sensor definitions.",
@@ -412,6 +446,7 @@ class PecronDataUpdateCoordinator(DataUpdateCoordinator):
                     "device": device,
                     "properties": props,
                     "tsl": tsl,
+                    "tsl_enum_specs": tsl_enum_specs,
                 }
                 _LOGGER.debug(
                     "Successfully fetched properties for %s: %s",

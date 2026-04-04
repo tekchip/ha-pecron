@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.6] - 2026-04-04
+
+### Fixed
+- **AC Charge Speed options now read from device TSL at runtime**: Options and values are no longer hardcoded — they are populated dynamically from the device's own TSL enum spec at startup. This ensures correct labels for every Pecron model automatically. Falls back to 20%/40%/60%/80%/100% if TSL is unavailable.
+- **TSL no longer re-fetched on every poll**: TSL is static device metadata. It is now cached per product key after the first fetch, reducing unnecessary API calls.
+
 ## [0.4.5] - 2026-04-04
 
 ### Fixed
