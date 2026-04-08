@@ -12,6 +12,13 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from unofficial_pecron_api import PecronAPI
+import unofficial_pecron_api.const as _pecron_const
+
+# The Pecron/Quectel backend migrated US accounts to the same domain cluster as EU.
+# The old US UserDomain "U.DM.10351.1" returns API error 5015 (UserDomain does not exist).
+# "C.DM.10351.1" is now recognized by the US server (iot-api.landecia.com).
+_pecron_const.REGIONS["US"]["user_domain"] = "C.DM.10351.1"
+_pecron_const.REGIONS["US"]["user_domain_secret"] = "FA5ZHXSka8y9GHvU91Hz1vWvaDSHE2mGW5B7bpn3fXTW"
 
 from .const import (
     ATTR_PROPERTY_CODE,

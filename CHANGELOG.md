@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.7] - 2026-04-08
+
+### Fixed
+- **US region broken after Pecron/Quectel backend domain migration**: The Quectel IoT platform changed the US UserDomain from `U.DM.10351.1` (no longer recognized, returns API error 5015) to `C.DM.10351.1`. Patched by overriding the stale constant in `unofficial-pecron-api==0.3.0` at import time so no library update is required.
+
 ## [0.4.6] - 2026-04-04
 
 ### Fixed

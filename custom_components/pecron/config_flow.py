@@ -9,6 +9,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from unofficial_pecron_api import PecronAPI
+import unofficial_pecron_api.const as _pecron_const
+
+# US UserDomain migrated on backend — patch before any PecronAPI use.
+_pecron_const.REGIONS["US"]["user_domain"] = "C.DM.10351.1"
+_pecron_const.REGIONS["US"]["user_domain_secret"] = "FA5ZHXSka8y9GHvU91Hz1vWvaDSHE2mGW5B7bpn3fXTW"
 
 from .const import (
     CONF_EMAIL,
